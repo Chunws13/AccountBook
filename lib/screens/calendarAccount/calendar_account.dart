@@ -35,7 +35,8 @@ class _CalendarAccount extends State<CalendarAccount> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => CreateScreen(onDate: _selectedDay)));
+                  builder: (context) =>
+                      CreateScreen(onDate: _selectedDay, mode: "create")));
         },
         child: Icon(Icons.add),
       ),

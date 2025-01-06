@@ -12,9 +12,26 @@ class CreateScreen extends StatefulWidget {
 class _CreateScreen extends State<CreateScreen> {
   final TextEditingController _contentController = TextEditingController();
   final TextEditingController _valueController = TextEditingController();
-  String stringDate = '';
 
-  String? _selectedTag;
+  final List<String> _tagList = ['의류', '주거', '식사', '유흥', '기타'];
+  late String _selectedTag;
+
+  void _tagSelect(String tag) {
+    setState(() {
+      _selectedTag = tag;
+    });
+  }
+
+  final List<String> _typeList = ['수입', '지출'];
+  late String _selectedType;
+
+  void _typeSelect(value) {
+    setState(() {
+      _selectedType = value;
+    });
+  }
+
+  String stringDate = '';
 
   Future<void> _addContent() async {
     final content = _contentController.text;
@@ -26,16 +43,12 @@ class _CreateScreen extends State<CreateScreen> {
     _valueController.clear();
   }
 
-  void _tagSelect(String tag) {
-    setState(() {
-      _selectedTag = tag;
-    });
-  }
-
   @override
   void initState() {
     super.initState();
     stringDate = widget.onDate.toString().split(' ')[0];
+    _selectedTag = _tagList[0];
+    _selectedType = _typeList[0];
   }
 
   @override
@@ -55,13 +68,18 @@ class _CreateScreen extends State<CreateScreen> {
                 ))),
             Expanded(
               flex: 1,
-              child: RevenueAndSpend(),
+              child: RevenueAndSpend(
+                typeSelect: _typeSelect,
+                typeList: _typeList,
+                selectedType: _selectedType,
+              ),
             ),
             Expanded(
               flex: 1,
               child: SelectTag(
                 tagSelect: _tagSelect,
-                initTag: _selectedTag,
+                selectedTag: _selectedTag,
+                tagList: _tagList,
               ),
             ),
             Expanded(
@@ -117,24 +135,27 @@ class _CreateScreen extends State<CreateScreen> {
 
 class SelectTag extends StatefulWidget {
   final Function(String) tagSelect;
-  final String? initTag;
+  final String selectedTag;
+  final List<String> tagList;
 
-  const SelectTag({super.key, required this.tagSelect, required this.initTag});
+  const SelectTag(
+      {super.key,
+      required this.tagSelect,
+      required this.selectedTag,
+      required this.tagList});
 
   @override
   State<SelectTag> createState() => _SelectTagState();
 }
 
 class _SelectTagState extends State<SelectTag> {
-  final List<String> tagList = ['의류', '주거', '식사', '유흥', '기타'];
-
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsetsDirectional.symmetric(vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: tagList.map((item) {
+        children: widget.tagList.map((item) {
           return Expanded(
               flex: 1,
               child: GestureDetector(
@@ -143,7 +164,7 @@ class _SelectTagState extends State<SelectTag> {
                     heightFactor: 0.7,
                     child: DecoratedBox(
                         decoration: BoxDecoration(
-                            color: widget.initTag == item
+                            color: widget.selectedTag == item
                                 ? Colors.blueAccent
                                 : null),
                         child: Center(child: Text(item)))),
@@ -155,46 +176,39 @@ class _SelectTagState extends State<SelectTag> {
 }
 
 class RevenueAndSpend extends StatefulWidget {
-  const RevenueAndSpend({
-    super.key,
-  });
+  final Function(String) typeSelect;
+  final String selectedType;
+  final List<String> typeList;
+
+  const RevenueAndSpend(
+      {super.key,
+      required this.typeSelect,
+      required this.selectedType,
+      required this.typeList});
 
   @override
   State<RevenueAndSpend> createState() => _RevenueAndSpendState();
 }
 
 class _RevenueAndSpendState extends State<RevenueAndSpend> {
-  final List<String> classify = ['수입', '지출'];
-  String? selectValue;
-
-  @override
-  void initState() {
-    super.initState();
-    selectValue = classify[0];
-  }
-
-  void selectCategory(value) {
-    setState(() {
-      selectValue = value;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsetsDirectional.symmetric(vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: classify.map((item) {
+        children: widget.typeList.map((item) {
           return Expanded(
               flex: 1,
               child: GestureDetector(
-                onTap: () => selectCategory(item),
+                onTap: () => widget.typeSelect(item),
                 child: FractionallySizedBox(
                     heightFactor: 0.5,
                     child: DecoratedBox(
                         decoration: BoxDecoration(
-                            color: item == selectValue ? Colors.amber : null),
+                            color: item == widget.selectedType
+                                ? Colors.amber
+                                : null),
                         child: Center(child: Text(item)))),
               ));
         }).toList(),

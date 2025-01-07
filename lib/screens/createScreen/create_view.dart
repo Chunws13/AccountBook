@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../crud.dart';
 
 class CreateScreen extends StatefulWidget {
   final DateTime onDate;
@@ -10,8 +12,9 @@ class CreateScreen extends StatefulWidget {
 }
 
 class _CreateScreen extends State<CreateScreen> {
+  final repository = HistoryRepo();
   final TextEditingController _contentController = TextEditingController();
-  final TextEditingController _valueController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
 
   final List<String> _tagList = ['의류', '주거', '식사', '유흥', '기타'];
   late String _selectedTag;
@@ -25,9 +28,9 @@ class _CreateScreen extends State<CreateScreen> {
   final List<String> _typeList = ['수입', '지출'];
   late String _selectedType;
 
-  void _typeSelect(value) {
+  void _typeSelect(amount) {
     setState(() {
-      _selectedType = value;
+      _selectedType = amount;
     });
   }
 
@@ -35,12 +38,28 @@ class _CreateScreen extends State<CreateScreen> {
 
   Future<void> _addContent() async {
     final content = _contentController.text;
-    final value = _valueController.text;
+    final amount = int.parse(_amountController.text);
 
-    print('$content, $value, ${widget.mode}');
+    if (content.isNotEmpty && !amount.isNaN) {
+      if (widget.mode == 'create') {
+        final String dateString = widget.onDate.toString().split(' ')[0];
+        final newHistory = History(
+          date: dateString,
+          type: _selectedType,
+          tag: _selectedTag,
+          content: content,
+          amount: amount,
+        );
+        await repository.createHistory(newHistory);
+      }
+    }
 
     _contentController.clear();
-    _valueController.clear();
+    _amountController.clear();
+
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -100,7 +119,11 @@ class _CreateScreen extends State<CreateScreen> {
               child: Container(
                 margin: const EdgeInsetsDirectional.symmetric(vertical: 20),
                 child: TextField(
-                  controller: _valueController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.digitsOnly, // 숫자만 허용
+                  ],
+                  controller: _amountController,
                   decoration: InputDecoration(
                     labelText: '금액',
                     border: OutlineInputBorder(),
@@ -138,11 +161,12 @@ class SelectTag extends StatefulWidget {
   final String selectedTag;
   final List<String> tagList;
 
-  const SelectTag(
-      {super.key,
-      required this.tagSelect,
-      required this.selectedTag,
-      required this.tagList});
+  const SelectTag({
+    super.key,
+    required this.tagSelect,
+    required this.selectedTag,
+    required this.tagList,
+  });
 
   @override
   State<SelectTag> createState() => _SelectTagState();
@@ -180,11 +204,12 @@ class RevenueAndSpend extends StatefulWidget {
   final String selectedType;
   final List<String> typeList;
 
-  const RevenueAndSpend(
-      {super.key,
-      required this.typeSelect,
-      required this.selectedType,
-      required this.typeList});
+  const RevenueAndSpend({
+    super.key,
+    required this.typeSelect,
+    required this.selectedType,
+    required this.typeList,
+  });
 
   @override
   State<RevenueAndSpend> createState() => _RevenueAndSpendState();

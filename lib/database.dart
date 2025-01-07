@@ -27,35 +27,19 @@ class DatabaseHelper {
         db.execute('''
         CREATE TABLE accountBook(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          date DATE,
-          classify TEXT,
+          date DATETIME,
+          type TEXT,
+          tag TEXT,
           content TEXT,
-          amount INTEGER,
-          tag TEXT
+          amount INTEGER
         )
         ''');
       },
     );
   }
 
-  Future<int> insertItem(Map<String, dynamic> item) async {
-    return 1;
-  }
-
-  Future<List<Map<String, dynamic>>> getItems() async {
+  Future<void> close() async {
     final db = await database;
-
-    return await db.query('accountBook');
-  }
-
-  Future<int> updateItem(int id, Map<String, dynamic> item) async {
-    final db = await database;
-    return await db
-        .update('accountBook', item, where: 'id = ?', whereArgs: [id]);
-  }
-
-  Future<int> deleteItem(int id) async {
-    final db = await database;
-    return await db.delete('accountBook', where: 'id = ?', whereArgs: [id]);
+    db.close();
   }
 }

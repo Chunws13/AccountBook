@@ -1,28 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../crud.dart';
 
 class Account extends StatefulWidget {
-  const Account({super.key});
+  final List<History> dayHistory;
+  const Account({super.key, required this.dayHistory});
 
   @override
   State<Account> createState() => _Account();
 }
 
 class _Account extends State<Account> {
-  bool initValue = true;
   final formatter = NumberFormat('#,##0', 'ko_KR');
-
-  List<Map<String, int>> expense = [
-    {'교통비': 1000},
-    {'점심값': 10000},
-    {'글자를 이렇게 너무 많이 적어서 넘치게 되면 어떻게 되는지 알아볼까요?': 0}
-  ];
-
-  List<Map<String, int>> reveneu = [
-    {'후원금': 10000},
-    {'월급': 17000},
-    {'월급': 1700000000000},
-  ];
+  bool initValue = true;
 
   String truncateText(String text) {
     if (text.length > 10) {
@@ -42,19 +32,19 @@ class _Account extends State<Account> {
 
   @override
   Widget build(BuildContext context) {
+    List<History> expense = [];
+    List<History> reveneu = [];
     num expenseSum = 0;
     num revenueSum = 0;
 
-    for (var item in expense) {
-      item.forEach((key, value) {
-        expenseSum += value;
-      });
-    }
-
-    for (var item in reveneu) {
-      item.forEach((key, value) {
-        revenueSum += value;
-      });
+    for (var content in widget.dayHistory) {
+      if (content.type == '수입') {
+        reveneu.add(content);
+        revenueSum += content.amount;
+      } else {
+        expense.add(content);
+        expenseSum += content.amount;
+      }
     }
 
     return Container(
@@ -122,10 +112,10 @@ class _Account extends State<Account> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                truncateText(item.keys.first),
+                                truncateText(item.content),
                               ),
                               Text(
-                                truncateInt(item.values.first),
+                                truncateInt(item.amount),
                               ),
                             ],
                           ),

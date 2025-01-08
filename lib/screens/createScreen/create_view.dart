@@ -39,11 +39,12 @@ class _CreateScreen extends State<CreateScreen> {
   Future<void> _addContent() async {
     final content = _contentController.text;
     final amount = int.parse(_amountController.text);
+    dynamic newHistory;
 
     if (content.isNotEmpty && !amount.isNaN) {
       if (widget.mode == 'create') {
         final String dateString = widget.onDate.toString().split(' ')[0];
-        final newHistory = History(
+        newHistory = History(
           date: dateString,
           type: _selectedType,
           tag: _selectedTag,
@@ -58,7 +59,7 @@ class _CreateScreen extends State<CreateScreen> {
     _amountController.clear();
 
     if (mounted) {
-      Navigator.pop(context);
+      Navigator.pop(context, newHistory);
     }
   }
 
@@ -83,7 +84,7 @@ class _CreateScreen extends State<CreateScreen> {
                 child: Center(
                     child: Text(
                   stringDate,
-                  style: TextStyle(fontSize: 24),
+                  style: TextStyle(fontSize: 18),
                 ))),
             Expanded(
               flex: 1,
@@ -103,30 +104,34 @@ class _CreateScreen extends State<CreateScreen> {
             ),
             Expanded(
               flex: 1,
-              child: Container(
-                margin: const EdgeInsetsDirectional.symmetric(vertical: 20),
-                child: TextField(
-                  controller: _contentController,
-                  decoration: InputDecoration(
-                    labelText: '출처',
-                    border: OutlineInputBorder(),
+              child: Center(
+                child: Container(
+                  margin: const EdgeInsetsDirectional.symmetric(vertical: 20),
+                  child: TextField(
+                    controller: _contentController,
+                    decoration: InputDecoration(
+                      labelText: '출처',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
               ),
             ),
             Expanded(
               flex: 1,
-              child: Container(
-                margin: const EdgeInsetsDirectional.symmetric(vertical: 20),
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly, // 숫자만 허용
-                  ],
-                  controller: _amountController,
-                  decoration: InputDecoration(
-                    labelText: '금액',
-                    border: OutlineInputBorder(),
+              child: Center(
+                child: Container(
+                  margin: const EdgeInsetsDirectional.symmetric(vertical: 20),
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly, // 숫자만 허용
+                    ],
+                    controller: _amountController,
+                    decoration: InputDecoration(
+                      labelText: '금액',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
               ),

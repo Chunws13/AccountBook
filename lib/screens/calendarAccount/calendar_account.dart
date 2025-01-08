@@ -47,19 +47,26 @@ class _CalendarAccount extends State<CalendarAccount> {
             CalendarView(dateSelect: _dateSelect),
             Expanded(
                 flex: 1,
-                child: Account(
-                  dayHistory: dayHistory,
-                )),
+                child:
+                    Account(dayHistory: dayHistory, selectedDay: _selectedDay)),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      CreateScreen(onDate: _selectedDay, mode: "create")));
+        onPressed: () async {
+          final newHistory = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  CreateScreen(onDate: _selectedDay, mode: "create"),
+            ),
+          );
+
+          if (newHistory != null) {
+            setState(() {
+              _loadDayHistory();
+            });
+          }
         },
         child: Icon(Icons.add),
       ),

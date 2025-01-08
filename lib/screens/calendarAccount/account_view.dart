@@ -4,7 +4,9 @@ import '../../crud.dart';
 
 class Account extends StatefulWidget {
   final List<History> dayHistory;
-  const Account({super.key, required this.dayHistory});
+  final DateTime selectedDay;
+  const Account(
+      {super.key, required this.dayHistory, required this.selectedDay});
 
   @override
   State<Account> createState() => _Account();
@@ -12,6 +14,12 @@ class Account extends StatefulWidget {
 
 class _Account extends State<Account> {
   final formatter = NumberFormat('#,##0', 'ko_KR');
+  final repository = HistoryRepo();
+  List<History> expense = [];
+  List<History> revenue = [];
+  num expenseSum = 0;
+  num revenueSum = 0;
+
   bool initValue = true;
 
   String truncateText(String text) {
@@ -21,32 +29,65 @@ class _Account extends State<Account> {
     return text;
   }
 
-  String truncateInt(num reveneu) {
-    if (reveneu > 1000000) {
-      String million = formatter.format(reveneu ~/ 1000000);
-      num remain = reveneu % 1000000;
+  String truncateInt(num revenue) {
+    if (revenue > 1000000) {
+      String million = formatter.format(revenue ~/ 1000000);
+      num remain = revenue % 1000000;
       return '$million.$remain 백만';
     }
-    return formatter.format(reveneu);
+    return formatter.format(revenue);
+  }
+
+  void deleteCard(int index, String type) {
+    if (type == '수입') {
+      revenueSum -= revenue[index].amount;
+      revenue.removeAt(index);
+    } else {
+      expenseSum -= expense[index].amount;
+      expense.removeAt(index);
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
-    List<History> expense = [];
-    List<History> reveneu = [];
-    num expenseSum = 0;
-    num revenueSum = 0;
+  void didUpdateWidget(covariant Account oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // selectedDay가 변경되면 새로운 데이터를 로드하고 화면을 업데이트
+    if (widget.selectedDay != oldWidget.selectedDay) {
+      _loadDayHistory();
+    }
+  }
 
-    for (var content in widget.dayHistory) {
+  @override
+  void initState() {
+    super.initState();
+    _loadDayHistory();
+  }
+
+  Future<void> _loadDayHistory() async {
+    final String dateString = widget.selectedDay.toString().split(' ')[0];
+    final dayHistory = await repository.getPartHistory(dateString);
+
+    expense.clear();
+    revenue.clear();
+    expenseSum = 0;
+    revenueSum = 0;
+
+    for (var content in dayHistory) {
       if (content.type == '수입') {
-        reveneu.add(content);
+        revenue.add(content);
         revenueSum += content.amount;
       } else {
         expense.add(content);
         expenseSum += content.amount;
       }
     }
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -98,31 +139,49 @@ class _Account extends State<Account> {
                   ),
           ),
           Expanded(
-              child: ListView.builder(
-                  itemCount: initValue ? expense.length : reveneu.length,
-                  itemBuilder: (context, index) {
-                    final item = initValue ? expense[index] : reveneu[index];
-                    return Card(
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Container(
-                          margin: EdgeInsets.symmetric(horizontal: 60),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                truncateText(item.content),
-                              ),
-                              Text(
-                                truncateInt(item.amount),
-                              ),
-                            ],
-                          ),
+            child: ListView.builder(
+              itemCount: initValue ? expense.length : revenue.length,
+              itemBuilder: (context, index) {
+                final item = initValue ? expense[index] : revenue[index];
+                return Dismissible(
+                  key: UniqueKey(),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) async {
+                    await repository.deleteHistory(item);
+                    setState(() {
+                      initValue
+                          ? deleteCard(index, '지출')
+                          : deleteCard(index, '수입');
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Center(child: Text('삭제되었습니다.'))),
+                      );
+                    });
+                  },
+                  child: Card(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Container(
+                        margin: EdgeInsets.symmetric(horizontal: 60),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              truncateText(item.content),
+                            ),
+                            Text(
+                              truncateInt(item.amount),
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  }))
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
